@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"log"
 	"os"
+	"os/exec"
 	"sync"
 )
 
@@ -24,83 +25,7 @@ const (
 )
 
 func main() {
-	app := &cli.App{
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "watch_list",
-				Aliases:  []string{"wl", "l"},
-				Usage:    "string describing files to watch. Each entry has to be space separated. Globs supported (.., *, **).",
-				Required: true,
-			},
-			&cli.StringFlag{
-				Name:    "events",
-				Aliases: []string{"e"},
-				Usage:   "string describing which events to listen to. Multiple events have to be space separated. Supported values: WRITE CREATE REMOVE RENAME",
-				Value:   "WRITE",
-			},
-		},
-		Commands: []*cli.Command{
-			{
-				Name:  "notify",
-				Usage: "notify the user when an event occurs",
-				Action: func(c *cli.Context) error {
-					err := run(c, CmdNotify)
-					return err
-				},
-				Flags: []cli.Flag{
-					&cli.BoolFlag{
-						Name:    "system",
-						Aliases: []string{"s"},
-						Usage:   "outputs notifications to dbus",
-						Value:   false,
-					},
-					&cli.BoolFlag{
-						Name:    "stdout",
-						Aliases: []string{"o"},
-						Usage:   "outputs notifications to stdout",
-						Value:   true,
-					},
-					&cli.StringFlag{
-						Name:    "file",
-						Aliases: []string{"f"},
-						Usage:   "outputs notifications to file",
-					},
-				},
-			},
-			{
-				Name:  "exec",
-				Usage: "execute a command after watcher receives an event",
-				Subcommands: []*cli.Command{
-					{
-						Name:  "shell",
-						Usage: "command will run in shell",
-						Action: func(c *cli.Context) error {
-							err := run(c, CmdShell)
-							return err
-						},
-					},
-					{
-						Name:  "builtin",
-						Usage: "run a builtin command",
-						Action: func(c *cli.Context) error {
-							err := run(c, CmdBuiltin)
-							return err
-						},
-						Subcommands: []*cli.Command{
-							{
-								Name:  "listen",
-								Usage: "list all builtin commands",
-								Action: func(c *cli.Context) error {
-									fmt.Println("This is not implemented for now.")
-									return nil
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+	app := setupApp()
 	app.EnableBashCompletion = true
 	err := app.Run(os.Args)
 	if err != nil {
@@ -124,13 +49,13 @@ func run(c *cli.Context, mode int) error {
 		}
 	} else if mode == CmdShell {
 		f = func(args ...interface{}) {
-			command := c.Args().First()
+			command := c.Args().Slice()
 			execShell(c, command)
 		}
 
 	} else if mode == CmdBuiltin {
 		f = func(args ...interface{}) {
-			command := c.Args().First()
+			command := c.Args().Slice()
 			execBuiltin(c, command)
 		}
 	} else {
@@ -148,13 +73,17 @@ func run(c *cli.Context, mode int) error {
 	}()
 
 	files := parseFiles(c.String("watch_list"))
-	for _, f := range files {
-		err = watcher.Add(f)
-		if err != nil {
-			log.Printf("couldn't add %s to watch list", f)
+	if len(files) > 0 {
+		for _, f := range files {
+			err = watcher.Add(f)
+			if err != nil {
+				log.Printf("couldn't add %s to watch list", f)
+			}
 		}
+		wg.Wait()
+	} else {
+		err = errors.New("no files were added to watch list")
 	}
-	wg.Wait()
 
 	return err
 }
@@ -195,6 +124,13 @@ func pushNotification(c *cli.Context, notification string) {
 	}
 }
 
-func execShell(c *cli.Context, command string) {}
+func execShell(_ *cli.Context, command []string) {
+	cmd := exec.Command(command[0], command[1:]...)
+	cmd.Stdout = os.Stdout
+	err := cmd.Run()
+	if err != nil {
+		log.Println(err)
+	}
+}
 
-func execBuiltin(c *cli.Context, command string) {}
+func execBuiltin(c *cli.Context, command []string) {}
