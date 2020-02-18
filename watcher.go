@@ -11,7 +11,7 @@ import (
 )
 
 var eventsMap = map[string]int{
-	"WRITE": int(fsnotify.Write),
+	"WRITE":  int(fsnotify.Write),
 	"RENAME": int(fsnotify.Rename),
 	"CREATE": int(fsnotify.Create),
 	"REMOVE": int(fsnotify.Remove),
@@ -25,51 +25,51 @@ const (
 
 func main() {
 	app := &cli.App{
-		Flags: []cli.Flag {
+		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name: "watch_list",
-				Aliases: []string{"wl", "l"},
-				Usage: "string describing files to watch. Each entry has to be space separated. Globs supported (.., *, **).",
+				Name:     "watch_list",
+				Aliases:  []string{"wl", "l"},
+				Usage:    "string describing files to watch. Each entry has to be space separated. Globs supported (.., *, **).",
 				Required: true,
 			},
 			&cli.StringFlag{
-				Name:        "events",
-				Aliases:     []string{"e"},
-				Usage:       "string describing which events to listen to. Multiple events have to be space separated. Supported values: WRITE CREATE REMOVE RENAME",
-				Value:       "WRITE",
+				Name:    "events",
+				Aliases: []string{"e"},
+				Usage:   "string describing which events to listen to. Multiple events have to be space separated. Supported values: WRITE CREATE REMOVE RENAME",
+				Value:   "WRITE",
 			},
 		},
 		Commands: []*cli.Command{
 			{
-				Name:    "notify",
-				Usage:   "notify the user when an event occurs",
-				Action:  func(c *cli.Context) error {
+				Name:  "notify",
+				Usage: "notify the user when an event occurs",
+				Action: func(c *cli.Context) error {
 					err := run(c, CmdNotify)
 					return err
 				},
-				Flags: []cli.Flag {
+				Flags: []cli.Flag{
 					&cli.BoolFlag{
-						Name: "system",
+						Name:    "system",
 						Aliases: []string{"s"},
-						Usage: "outputs notifications to dbus",
-						Value: false,
+						Usage:   "outputs notifications to dbus",
+						Value:   false,
 					},
 					&cli.BoolFlag{
-						Name: "stdout",
+						Name:    "stdout",
 						Aliases: []string{"o"},
-						Usage: "outputs notifications to stdout",
-						Value: true,
+						Usage:   "outputs notifications to stdout",
+						Value:   true,
 					},
 					&cli.StringFlag{
-						Name: "file",
+						Name:    "file",
 						Aliases: []string{"f"},
-						Usage: "outputs notifications to file",
+						Usage:   "outputs notifications to file",
 					},
 				},
 			},
 			{
-				Name:        "exec",
-				Usage:       "execute a command after watcher receives an event",
+				Name:  "exec",
+				Usage: "execute a command after watcher receives an event",
 				Subcommands: []*cli.Command{
 					{
 						Name:  "shell",
@@ -88,7 +88,7 @@ func main() {
 						},
 						Subcommands: []*cli.Command{
 							{
-								Name: "listen",
+								Name:  "listen",
 								Usage: "list all builtin commands",
 								Action: func(c *cli.Context) error {
 									fmt.Println("This is not implemented for now.")
@@ -118,8 +118,9 @@ func run(c *cli.Context, mode int) error {
 	var f func(args ...interface{})
 	if mode == CmdNotify {
 		f = func(args ...interface{}) {
-			event := args[0].(string)
-			pushNotification(c, "Event: " + event)
+			eventOp := args[0].(fsnotify.Op)
+			fileModified := args[1].(string)
+			pushNotification(c, "Event ("+ eventOp.String() + ") received for file '" + fileModified + "'" )
 		}
 	} else if mode == CmdShell {
 		f = func(args ...interface{}) {
@@ -166,8 +167,11 @@ func watch(watcher *fsnotify.Watcher, f func(args ...interface{}), events int) e
 				return errors.New("watcher.Events channel returned ok == false")
 			}
 
-			if ev := int(event.Op)&events; ev != 0 {
-				f(event.String(), event.Name)
+			if ev := int(event.Op) & events; ev != 0 {
+				f(event.Op, event.Name)
+			}
+			if event.Op == fsnotify.Remove {
+				watcher.Add(event.Name)
 			}
 		case err, ok := <-watcher.Errors:
 			if !ok {
