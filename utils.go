@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/esiqveland/notify"
+	"github.com/godbus/dbus/v5"
 	"log"
 	"path/filepath"
 	"sort"
@@ -65,4 +67,27 @@ func convertEvents(eventsString string) (events int) {
 		}
 	}
 	return
+}
+
+func systemNotify(notification string) {
+	conn, err := dbus.SessionBus()
+	if err != nil {
+		panic(err)
+	}
+
+	n := notify.Notification{
+		AppName:       "Watcher",
+		ReplacesID:    uint32(0),
+		Summary:       "Event received",
+		Body:          notification,
+		Actions:       []string{"cancel", "Cancel", "open", "Open"},
+		Hints:         map[string]dbus.Variant{},
+		ExpireTimeout: int32(5000),
+	}
+
+	createdID, err := notify.SendNotification(conn, n)
+	if err != nil {
+		log.Printf("error sending notification: %v", err.Error())
+	}
+	log.Printf("created notification with id: %v", createdID)
 }

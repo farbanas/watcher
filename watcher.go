@@ -18,9 +18,9 @@ var eventsMap = map[string]int{
 }
 
 const (
-	CMD_NOTIFY int = 0
-	CMD_SHELL int = 1
-	CMD_BUILTIN int = 2
+	CmdNotify  int = 0
+	CmdShell   int = 1
+	CmdBuiltin int = 2
 )
 
 func main() {
@@ -44,7 +44,7 @@ func main() {
 				Name:    "notify",
 				Usage:   "notify the user when an event occurs",
 				Action:  func(c *cli.Context) error {
-					err := run(c, CMD_NOTIFY)
+					err := run(c, CmdNotify)
 					return err
 				},
 				Flags: []cli.Flag {
@@ -75,7 +75,7 @@ func main() {
 						Name:  "shell",
 						Usage: "command will run in shell",
 						Action: func(c *cli.Context) error {
-							err := run(c, CMD_SHELL)
+							err := run(c, CmdShell)
 							return err
 						},
 					},
@@ -83,7 +83,7 @@ func main() {
 						Name:  "builtin",
 						Usage: "run a builtin command",
 						Action: func(c *cli.Context) error {
-							err := run(c, CMD_BUILTIN)
+							err := run(c, CmdBuiltin)
 							return err
 						},
 						Subcommands: []*cli.Command{
@@ -115,11 +115,23 @@ func run(c *cli.Context, mode int) error {
 	}
 	defer watcher.Close()
 
-	if mode == CMD_NOTIFY {
-	} else if mode == CMD_SHELL {
+	var f func(args ...interface{})
+	if mode == CmdNotify {
+		f = func(args ...interface{}) {
+			event := args[0].(string)
+			pushNotification(c, "Event: " + event)
+		}
+	} else if mode == CmdShell {
+		f = func(args ...interface{}) {
+			command := c.Args().First()
+			execShell(c, command)
+		}
 
-	} else if mode == CMD_BUILTIN {
-
+	} else if mode == CmdBuiltin {
+		f = func(args ...interface{}) {
+			command := c.Args().First()
+			execBuiltin(c, command)
+		}
 	} else {
 		log.Fatalf("%d is not a valid mode", mode)
 	}
@@ -127,7 +139,7 @@ func run(c *cli.Context, mode int) error {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		err = watch(watcher, func() {fmt.Println("test")}, convertEvents(c.String("events")))
+		err = watch(watcher, f, convertEvents(c.String("events")))
 		if err != nil {
 			log.Println(err)
 		}
@@ -146,7 +158,7 @@ func run(c *cli.Context, mode int) error {
 	return err
 }
 
-func watch(watcher *fsnotify.Watcher, f func(), events int) error {
+func watch(watcher *fsnotify.Watcher, f func(args ...interface{}), events int) error {
 	for {
 		select {
 		case event, ok := <-watcher.Events:
@@ -155,7 +167,7 @@ func watch(watcher *fsnotify.Watcher, f func(), events int) error {
 			}
 
 			if ev := int(event.Op)&events; ev != 0 {
-				f()
+				f(event.String(), event.Name)
 			}
 		case err, ok := <-watcher.Errors:
 			if !ok {
@@ -166,13 +178,19 @@ func watch(watcher *fsnotify.Watcher, f func(), events int) error {
 	}
 }
 
-func notify(c *cli.Context) {
+func pushNotification(c *cli.Context, notification string) {
 	if c.Bool("system") {
-
-	} else if c.Bool("stdout") {
-
+		systemNotify(notification)
+	}
+	if c.Bool("stdout") {
+		fmt.Println(notification)
+	}
+	if f := c.String("file"); f != "" {
+		// TODO: implement this
+		panic("Not implemented")
 	}
 }
 
-func execShell(c *cli.Context) {}
-func execBuiltin(c *cli.Context) {}
+func execShell(c *cli.Context, command string) {}
+
+func execBuiltin(c *cli.Context, command string) {}
