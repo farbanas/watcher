@@ -62,10 +62,12 @@ func run(c *cli.Context, mode int) error {
 		log.Fatalf("%d is not a valid mode", mode)
 	}
 
+	events := convertEvents(c.String("events"))
+
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		err = watch(watcher, f, convertEvents(c.String("events")))
+		err = watch(watcher, f, events)
 		if err != nil {
 			log.Println(err)
 		}

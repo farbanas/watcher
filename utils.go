@@ -22,7 +22,7 @@ func parseFiles(files string) (watchList []string){
 		if matches != nil {
 			watchList = append(watchList, matches...)
 		} else {
-			log.Println(token + " did not match to any file")
+			log.Println("Token '" + token + "' did not match to any file")
 		}
 	}
 	if len(watchList) > 1 {
@@ -110,7 +110,7 @@ func setupApp() *cli.App {
 			&cli.StringFlag{
 				Name:    "events",
 				Aliases: []string{"e"},
-				Usage:   "string describing which events to listen to. Multiple events have to be space separated. Supported values: WRITE CREATE REMOVE RENAME",
+				Usage:   "string describing which events to listen to. Multiple events have to be space separated. Supported values: WRITE REMOVE RENAME",
 				Value:   "WRITE",
 			},
 		},
