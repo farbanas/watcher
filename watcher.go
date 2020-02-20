@@ -12,10 +12,10 @@ import (
 )
 
 var eventsMap = map[string]int{
-	"WRITE":  int(fsnotify.Write),
-	"RENAME": int(fsnotify.Rename),
 	"CREATE": int(fsnotify.Create),
+	"WRITE":  int(fsnotify.Write),
 	"REMOVE": int(fsnotify.Remove),
+	"RENAME": int(fsnotify.Rename),
 }
 
 const (
@@ -48,9 +48,13 @@ func run(c *cli.Context, mode int) error {
 			pushNotification(c, "Event ("+ eventOp.String() + ") received for file '" + fileModified + "'" )
 		}
 	} else if mode == CmdShell {
+		if len(c.Args().Slice()) == 0 {
+			log.Fatalln("No command provided! Please provide a command that will be executed on event.")
+		}
 		f = func(args ...interface{}) {
 			command := c.Args().Slice()
-			execShell(c, command)
+			out := execShell(c, command)
+			fmt.Println(string(out))
 		}
 
 	} else if mode == CmdBuiltin {
@@ -126,13 +130,13 @@ func pushNotification(c *cli.Context, notification string) {
 	}
 }
 
-func execShell(_ *cli.Context, command []string) {
+func execShell(_ *cli.Context, command []string) []byte {
 	cmd := exec.Command(command[0], command[1:]...)
-	cmd.Stdout = os.Stdout
-	err := cmd.Run()
+	out, err := cmd.Output()
 	if err != nil {
 		log.Println(err)
 	}
+	return out
 }
 
 func execBuiltin(c *cli.Context, command []string) {}

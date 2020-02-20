@@ -100,6 +100,8 @@ func systemNotify(notification string) {
 
 func setupApp() *cli.App {
 	app := &cli.App{
+		Name: "watcher",
+		Usage: "command line program for monitoring file changes",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:     "watch_list",
