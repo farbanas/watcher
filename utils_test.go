@@ -33,6 +33,7 @@ func Test_convertEvents(t *testing.T) {
 	}
 }
 
+/*
 func Test_deduplicate(t *testing.T) {
 	type args struct {
 		watchList []string
@@ -52,6 +53,7 @@ func Test_deduplicate(t *testing.T) {
 		})
 	}
 }
+*/
 
 func Test_parseFiles(t *testing.T) {
 	type args struct {
