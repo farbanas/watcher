@@ -1,10 +1,8 @@
-pipeline {
-    agent { docker { image 'golang' } }
-    stages {
-        stage('build') {
-            steps {
-                sh 'go version'
-            }
+node('docker') {
+    checkout scm
+    stage('Build') {
+        docker.image('golang').inside {
+            sh 'go version'
         }
     }
 }
