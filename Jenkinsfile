@@ -1,14 +1,16 @@
-podTemplate(label: "golang") {
+podTemplate() {
     node("golang") {
-		stage('test') {
-			steps {
-			sh 'go get github.com/tebeka/go2xunit'
-			sh 'go test -v | $GOPATH/bin/go2xunit > test_output.xml'
+    	container("jnlp") {
+			stage('test') {
+				steps {
+					sh 'go get github.com/tebeka/go2xunit'
+					sh 'go test -v | $GOPATH/bin/go2xunit > test_output.xml'
+				}
 			}
-		}
-		stage('build') {
-			steps {
-			sh 'go build -o watcher utils.go watcher.go'
+			stage('build') {
+				steps {
+					sh 'go build -o watcher utils.go watcher.go'
+				}
 			}
 		}
     }
