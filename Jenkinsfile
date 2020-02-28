@@ -1,3 +1,5 @@
+import jenkins.model.*
+
 podTemplate {
     node(POD_LABEL) {
 		stage('test') {
