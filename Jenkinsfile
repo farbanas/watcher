@@ -1,5 +1,5 @@
 podTemplate(label: "golang") {
-    node(POD_LABEL) {
+    node("golang") {
 		stage('test') {
 			steps {
 			sh 'go get github.com/tebeka/go2xunit'
