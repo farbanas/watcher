@@ -1,5 +1,5 @@
 podTemplate(label: "golang") {
-    node("docker") {
+    node("golang") {
     	container("jnlp") {
 			stage('test') {
 				steps {
