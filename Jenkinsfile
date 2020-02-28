@@ -4,7 +4,7 @@ podTemplate(
 	]
 ) {
     node(POD_LABEL) {
-		container("golang") {
+		container("jnlp") {
 			stage('test') {
 				sh 'go get github.com/tebeka/go2xunit'
 				sh 'go test -v | $GOPATH/bin/go2xunit > test_output.xml'
