@@ -8,14 +8,18 @@ podTemplate(containers: [
 		stage('test') {
 			/* scm checkout */
 			container('golang') {
-				sh 'go get github.com/tebeka/go2xunit'
-				sh 'go test -v | $GOPATH/bin/go2xunit > test_output.xml'
+				stage('go test') {
+					sh 'go get github.com/tebeka/go2xunit'
+					sh 'go test -v | $GOPATH/bin/go2xunit > test_output.xml'
+				}
 			}
 		}
 		stage('build') {
 			/* scm checkout */
 			container('golang') {
-				sh 'go build -o watcher utils.go watcher.go'
+				stage('go build') {
+					sh 'go build -o watcher utils.go watcher.go'
+				}
 			}
 		}
     }
