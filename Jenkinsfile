@@ -5,14 +5,16 @@ podTemplate(containers: [
 ]) {
     node(POD_LABEL) {
 		git url: 'https://github.com/farbanas/watcher.gi://github.com/farbanas/watcher.git'
-    	container('golang') {
-			stage('test') {
-				/* scm checkout */
+		stage('test') {
+			/* scm checkout */
+			container('golang') {
 				sh 'go get github.com/tebeka/go2xunit'
 				sh 'go test -v | $GOPATH/bin/go2xunit > test_output.xml'
 			}
-			stage('build') {
-				/* scm checkout */
+		}
+		stage('build') {
+			/* scm checkout */
+			container('golang') {
 				sh 'go build -o watcher utils.go watcher.go'
 			}
 		}
