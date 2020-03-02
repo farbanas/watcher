@@ -1,7 +1,5 @@
-podTemplate(containers: [
-	containerTemplate(name: 'golang', image: 'golang', command: 'echo "this is test"', ttyEnabled: true)
-]) {
-    node(POD_LABEL) {
+podTemplate(name: "golang") {
+    node("golang") {
 		stage('test') {
 			/* scm checkout */
 			sh 'go get github.com/tebeka/go2xunit'
