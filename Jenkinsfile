@@ -1,5 +1,5 @@
 podTemplate(containers: [
-	containerTemplate(name: 'golang', image: 'golang', command: 'echo "this is test"')
+	containerTemplate(name: 'golang', image: 'golang', command: 'echo "this is test"', ttyEnabled: true)
 ]) {
     node(POD_LABEL) {
 		stage('test') {
