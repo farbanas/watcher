@@ -1,7 +1,7 @@
 import jenkins.model.*
 
 podTemplate(containers: [
-	containerTemplate(name: 'golang', image: 'golang', command: 'cat')
+	containerTemplate(name: 'golang', image: 'golang', command: 'echo "this is test"')
 ]) {
     node(POD_LABEL) {
 		git url: 'https://github.com/farbanas/watcher.gi://github.com/farbanas/watcher.git'
