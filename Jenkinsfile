@@ -4,6 +4,7 @@ podTemplate(containers: [
 	containerTemplate(name: 'golang', image: 'golang', command: 'cat')
 ]) {
     node(POD_LABEL) {
+		git url: 'https://github.com/farbanas/watcher.gi://github.com/farbanas/watcher.git'
     	container('golang') {
 			stage('test') {
 				/* scm checkout */
