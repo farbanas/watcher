@@ -1,5 +1,3 @@
-import jenkins.model.*
-
 podTemplate(containers: [
 	containerTemplate(name: 'golang', image: 'golang', command: 'echo "this is test"')
 ]) {
